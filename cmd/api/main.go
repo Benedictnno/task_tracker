@@ -13,7 +13,7 @@ import (
 	"todo-api/internal/handlers"
 	"todo-api/internal/middleware"
 	"todo-api/internal/repository"
-	 "todo-api/internal/services"
+	service "todo-api/internal/services"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -31,7 +31,9 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer dbPool.Close()
-
+	userRepo := repository.NewUserRepository(dbPool)
+	authService := service.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService)
 	todoRepo := repository.NewTodoRepository(dbPool)
 	todoService := service.NewTodoService(todoRepo)
 	todoHandler := handlers.NewTodoHandler(todoService)
@@ -40,14 +42,17 @@ func main() {
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.Timeout(5 * time.Second))
 	r.Use(middleware.Logger)
-	
+
+	// Auth routes
+	r.Post("/signup", authHandler.Signup)
+	r.Post("/login", authHandler.Login)
+	// Todo routes (protected)
 	r.Get("/todos", todoHandler.GetTodos)
 	r.Post("/todos", todoHandler.CreateTodo)
 	r.Get("/todos/{id}", todoHandler.GetTodoByID)
 	r.Put("/todos/{id}", todoHandler.UpdateTodo)
 	r.Delete("/todos/{id}", todoHandler.DeleteTodo)
 
-	
 	server := &http.Server{
 		Addr:    ":" + os.Getenv("PORT"),
 		Handler: r,
