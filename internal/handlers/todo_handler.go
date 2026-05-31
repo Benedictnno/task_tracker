@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"todo-api/internal/middleware"
 	service "todo-api/internal/services"
 
 	"github.com/go-chi/chi/v5"
@@ -19,7 +20,13 @@ func NewTodoHandler(service *service.TodoService) *TodoHandler {
 }
 
 func (h *TodoHandler) GetTodos(w http.ResponseWriter, r *http.Request) {
-	todos, err := h.service.GetTodos(r.Context())
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok || userID <= 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	todos, err := h.service.GetTodos(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -31,20 +38,31 @@ func (h *TodoHandler) GetTodos(w http.ResponseWriter, r *http.Request) {
 
 func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title string `json:"title"`
+		Title  string `json:"title"`
+		UserID int    `json:"user_id"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	userID := r.Context().Value(middleware.UserIDKey).(int)
 
 	if input.Title == "" {
 		http.Error(w, "Title is required", http.StatusBadRequest)
 		return
 	}
 
-	todo, err := h.service.CreateTodo(r.Context(), input.Title)
+	// if input.UserID <= 0 {
+	// 	http.Error(w, "User ID is required", http.StatusBadRequest)
+	// 	return
+	// }
+
+	todo, err := h.service.CreateTodo(
+		r.Context(),
+		input.Title,
+		userID,
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

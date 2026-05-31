@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"todo-api/internal/middleware"
 	service "todo-api/internal/services"
 )
 
@@ -69,4 +70,19 @@ func (h *AuthHandler) Login(
 	json.NewEncoder(w).Encode(map[string]string{
 		"token": token,
 	})
+}
+
+func (h *AuthHandler) Profile(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	userID := r.Context().
+		Value(middleware.UserIDKey)
+
+	json.NewEncoder(w).Encode(
+		map[string]interface{}{
+			"user_id": userID,
+		},
+	)
 }

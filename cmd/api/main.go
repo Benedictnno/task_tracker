@@ -43,12 +43,25 @@ func main() {
 	r.Use(chimiddleware.Timeout(5 * time.Second))
 	r.Use(middleware.Logger)
 
+	r.With(
+		middleware.Auth,
+	).Get(
+		"/profile",
+		authHandler.Profile,
+	)
 	// Auth routes
 	r.Post("/signup", authHandler.Signup)
 	r.Post("/login", authHandler.Login)
 	// Todo routes (protected)
-	r.Get("/todos", todoHandler.GetTodos)
-	r.Post("/todos", todoHandler.CreateTodo)
+	r.With(middleware.Auth).Post(
+		"/todos",
+		todoHandler.CreateTodo,
+	)
+
+	r.With(middleware.Auth).Get(
+		"/todos",
+		todoHandler.GetTodos,
+	)
 	r.Get("/todos/{id}", todoHandler.GetTodoByID)
 	r.Put("/todos/{id}", todoHandler.UpdateTodo)
 	r.Delete("/todos/{id}", todoHandler.DeleteTodo)

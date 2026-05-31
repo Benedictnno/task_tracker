@@ -16,21 +16,21 @@ func NewTodoService(repo *repository.TodoRepository) *TodoService {
 	return &TodoService{repo: repo}
 }
 
-func (s *TodoService) CreateTodo(ctx context.Context, title string) (models.Todo, error) {
+func (s *TodoService) CreateTodo(ctx context.Context, title string, userID int) (models.Todo, error) {
 	if title == "" {
 		return models.Todo{}, errors.New("title cannot be empty")
 	}
 
-	todo, err := s.repo.CreateTodo(ctx, title)
+	todo, err := s.repo.CreateTodo(ctx, title, userID)
 	if err != nil {
 		return models.Todo{}, err
 	}
 
-	return *todo, nil
-}
+	return todo, nil
+} 
 
-func (s *TodoService) GetTodos(ctx context.Context) ([]models.Todo, error) {
-	return s.repo.GetTodos(ctx)
+func (s *TodoService) GetTodos(ctx context.Context, userID int) ([]models.Todo, error) {
+	return s.repo.GetTodos(ctx, userID)
 }
 
 func (s *TodoService) GetTodoByID(ctx context.Context, id int) (models.Todo, error) {
