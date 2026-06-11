@@ -65,4 +65,6 @@ func Auth(next http.Handler) http.Handler {
 	})
 }
 
-const UserIDKey = "userID"
+type contextKey string
+
+const UserIDKey contextKey = "userID"

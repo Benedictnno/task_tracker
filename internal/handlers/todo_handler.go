@@ -39,7 +39,7 @@ func (h *TodoHandler) GetTodos(w http.ResponseWriter, r *http.Request) {
 func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title  string `json:"title"`
-		UserID int    `json:"user_id"`
+		
 	}
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
@@ -52,11 +52,6 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Title is required", http.StatusBadRequest)
 		return
 	}
-
-	// if input.UserID <= 0 {
-	// 	http.Error(w, "User ID is required", http.StatusBadRequest)
-	// 	return
-	// }
 
 	todo, err := h.service.CreateTodo(
 		r.Context(),

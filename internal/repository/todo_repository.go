@@ -44,7 +44,7 @@ func (r *TodoRepository) GetTodos(
 	todos := make([]models.Todo, 0)
 	for rows.Next() {
 		var todo models.Todo
-		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
+		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UserID)
 		if err != nil {
 			return nil, err
 		}
@@ -54,9 +54,9 @@ func (r *TodoRepository) GetTodos(
 }
 
 
-func (r *TodoRepository) GetTodoByID(ctx context.Context, id int) (*models.Todo, error) {
+func (r *TodoRepository) GetTodoByID(ctx context.Context, id int, userID int) (*models.Todo, error) {
 	var todo models.Todo
-	err := r.DB.QueryRow(ctx, "SELECT id, title, completed, created_at FROM todos WHERE id = $1", id).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
+	err := r.DB.QueryRow(ctx, "SELECT id, title, completed, created_at FROM todos WHERE id = $1 AND user_id = $2", id, userID).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (r *TodoRepository) CreateTodo(
 	return todo, err
 }
 
-func (r *TodoRepository) UpdateTodo(ctx context.Context, id int, title string, completed bool) (*models.Todo, error) {
+func (r *TodoRepository) UpdateTodo(ctx context.Context, id int, title string, completed bool , userID int) (*models.Todo, error) {
 	var todo models.Todo
 	err := r.DB.QueryRow(ctx, "UPDATE todos SET title = $1, completed = $2 WHERE id = $3 RETURNING id, title, completed, created_at", title, completed, id).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
 	if err != nil {
@@ -108,8 +108,8 @@ func (r *TodoRepository) UpdateTodo(ctx context.Context, id int, title string, c
 	return &todo, nil
 }
 
-func (r *TodoRepository) DeleteTodo(ctx context.Context, id int) error {
-	result, err := r.DB.Exec(ctx, "DELETE FROM todos WHERE id = $1", id)
+func (r *TodoRepository) DeleteTodo(ctx context.Context, id int, userID int) error {
+	result, err := r.DB.Exec(ctx, "DELETE FROM todos WHERE id = $1 AND user_id = $2", id, userID)
 	if err != nil {
 		return err
 	}
