@@ -44,7 +44,7 @@ func (r *TodoRepository) GetTodos(
 	todos := make([]models.Todo, 0)
 	for rows.Next() {
 		var todo models.Todo
-		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UserID)
+		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.UserID, &todo.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -53,10 +53,9 @@ func (r *TodoRepository) GetTodos(
 	return todos, nil
 }
 
-
 func (r *TodoRepository) GetTodoByID(ctx context.Context, id int, userID int) (*models.Todo, error) {
 	var todo models.Todo
-	err := r.DB.QueryRow(ctx, "SELECT id, title, completed, created_at FROM todos WHERE id = $1 AND user_id = $2", id, userID).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
+	err := r.DB.QueryRow(ctx, "SELECT id, title, completed, user_id, created_at FROM todos WHERE id = $1 AND user_id = $2", id, userID).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.UserID, &todo.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +98,9 @@ func (r *TodoRepository) CreateTodo(
 	return todo, err
 }
 
-func (r *TodoRepository) UpdateTodo(ctx context.Context, id int, title string, completed bool , userID int) (*models.Todo, error) {
+func (r *TodoRepository) UpdateTodo(ctx context.Context, id int, title string, completed bool, userID int) (*models.Todo, error) {
 	var todo models.Todo
-	err := r.DB.QueryRow(ctx, "UPDATE todos SET title = $1, completed = $2 WHERE id = $3 RETURNING id, title, completed, created_at", title, completed, id).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
+	err := r.DB.QueryRow(ctx, "UPDATE todos SET title = $1, completed = $2 WHERE id = $3 RETURNING id, title, completed,user_id, created_at", title, completed, id,userID).Scan(&todo.ID, &todo.Title, &todo.Completed,&todo.UserID, &todo.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

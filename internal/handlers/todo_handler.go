@@ -38,8 +38,7 @@ func (h *TodoHandler) GetTodos(w http.ResponseWriter, r *http.Request) {
 
 func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title  string `json:"title"`
-		
+		Title string `json:"title"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
@@ -73,7 +72,8 @@ func (h *TodoHandler) GetTodoByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	todo, err := h.service.GetTodoByID(r.Context(), id)
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+	todo, err := h.service.GetTodoByID(r.Context(), id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Todo not found", http.StatusNotFound)
@@ -102,8 +102,9 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	userID := r.Context().Value(middleware.UserIDKey).(int)
 
-	todo, err := h.service.UpdateTodo(r.Context(), id, input.Title, input.Completed)
+	todo, err := h.service.UpdateTodo(r.Context(), id, input.Title, input.Completed, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Todo not found", http.StatusNotFound)
@@ -123,8 +124,8 @@ func (h *TodoHandler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-
-	_, err = h.service.DeleteTodo(r.Context(), id)
+	userID := r.Context().Value(middleware.UserIDKey).(int)	
+	_, err = h.service.DeleteTodo(r.Context(), id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			http.Error(w, "Todo not found", http.StatusNotFound)
