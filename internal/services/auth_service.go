@@ -6,20 +6,23 @@ import (
 	"time"
 
 	"todo-api/internal/models"
-	"todo-api/internal/repository"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-
-	
 )
 
-type AuthService struct {
-	repo *repository.UserRepository
+type UserRepository interface {
+	CreateUser(ctx context.Context, email, password string) (models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 }
 
-func NewAuthService(repo *repository.UserRepository) *AuthService {
-	return &AuthService{repo: repo}
+type AuthService struct {
+	repo      UserRepository
+	jwtSecret string
+}
+
+func NewAuthService(repo UserRepository, secret string) *AuthService {
+	return &AuthService{repo: repo, jwtSecret: secret}
 }
 
 func (s *AuthService) Signup(ctx context.Context, email, password string) (models.User, error) {
@@ -34,8 +37,6 @@ func (s *AuthService) Signup(ctx context.Context, email, password string) (model
 
 	return s.repo.CreateUser(ctx, email, string(hashedPassword))
 }
-
-const jwtSecret = "super-secret-key"
 
 func (s *AuthService) Login(
 	ctx context.Context,
@@ -66,7 +67,7 @@ func (s *AuthService) Login(
 		},
 	)
 
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", err
 	}

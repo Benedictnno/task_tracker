@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"todo-api/internal/config"
 	"todo-api/internal/db"
 	"todo-api/internal/handlers"
+	"todo-api/internal/logger"
 	"todo-api/internal/middleware"
 	"todo-api/internal/repository"
 	service "todo-api/internal/services"
@@ -21,12 +24,15 @@ import (
 )
 
 func main() {
+	cfg := config.Load()
+	fmt.Println(cfg.Port)
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-	dbPool, err := db.ConnectDB()
+	middleware.JWTSecret = cfg.JWTSecret
+	service.JWTSecret = cfg.JWTSecret
+	dbPool, err := db.ConnectDB(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
@@ -49,6 +55,7 @@ func main() {
 		"/profile",
 		authHandler.Profile,
 	)
+
 	// Auth routes
 	r.Post("/signup", authHandler.Signup)
 	r.Post("/login", authHandler.Login)
@@ -65,9 +72,9 @@ func main() {
 	r.Get("/todos/{id}", todoHandler.GetTodoByID)
 	r.Put("/todos/{id}", todoHandler.UpdateTodo)
 	r.Delete("/todos/{id}", todoHandler.DeleteTodo)
-
+	logger.Init()
 	server := &http.Server{
-		Addr:    ":" + os.Getenv("PORT"),
+		Addr:    ":" + cfg.Port,
 		Handler: r,
 	}
 	go func() {

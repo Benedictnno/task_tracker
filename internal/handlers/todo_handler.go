@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"todo-api/internal/logger"
 	"todo-api/internal/middleware"
 	service "todo-api/internal/services"
 
@@ -29,6 +30,9 @@ func (h *TodoHandler) GetTodos(w http.ResponseWriter, r *http.Request) {
 	todos, err := h.service.GetTodos(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Log.Error().
+			Err(err).
+			Msg("failed to get todos")
 		return
 	}
 
@@ -59,6 +63,9 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Log.Error().
+			Err(err).
+			Msg("failed to create todo")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -80,6 +87,9 @@ func (h *TodoHandler) GetTodoByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Log.Error().
+			Err(err).
+			Msg("failed to get todo by ID")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -102,8 +112,11 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	userID := r.Context().Value(middleware.UserIDKey).(int)
-
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	todo, err := h.service.UpdateTodo(r.Context(), id, input.Title, input.Completed, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -111,6 +124,9 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Log.Error().
+			Err(err).
+			Msg("failed to update todo")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -124,7 +140,7 @@ func (h *TodoHandler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	userID := r.Context().Value(middleware.UserIDKey).(int)	
+	userID := r.Context().Value(middleware.UserIDKey).(int)
 	_, err = h.service.DeleteTodo(r.Context(), id, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -132,6 +148,9 @@ func (h *TodoHandler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Log.Error().
+			Err(err).
+			Msg("failed to delete todo")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

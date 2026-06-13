@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"time"
+	"todo-api/internal/logger"
 )
 
 func Logger(next http.Handler) http.Handler {
@@ -12,11 +12,10 @@ func Logger(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		log.Printf(
-			"%s %s %v",
-			r.Method,
-			r.URL.Path,
-			time.Since(start),
-		)
+		logger.Log.Info().
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Dur("duration", time.Since(start)).
+			Msg("request completed")
 	})
 }

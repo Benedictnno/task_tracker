@@ -9,7 +9,7 @@ import (
 )
 
 const jwtSecret = "super-secret-key"
-
+var JWTSecret string
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(
 		w http.ResponseWriter,

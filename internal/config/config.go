@@ -7,21 +7,21 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func LoadConfig() {
+type Config struct {
+	DatabaseURL string
+	JWTSecret   string
+	Port        string
+}
+
+func Load() *Config {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println(".env file not found")
 	}
-}
 
-func GetDBURL(key string) string {
-	return os.Getenv("DATABASE_URL")
-}
-
-func GetPort(key string) string {
-	return os.Getenv("PORT")
-}
-
-func GetJWTSecret(key string) string {
-	return os.Getenv("JWT_SECRET")
+	return &Config{
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
+		Port:        os.Getenv("PORT"),
+	}
 }
